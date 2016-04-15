@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <title>Hello Three.js</title>
+        <meta charset="utf-8" />
+
+        <!--css-->
+        <link href="/css/style.css" rel="stylesheet" />
+
+        <!--js-->
+        <script src="/js/three.min.js"></script>
+        <script src="/js/Mirror.js"></script>
+
+    </head>
+    <body>
+
+        <!--<div style="position:relative; z-index:2;">
+            <h1>TITOLO</h1>
+        </div>-->
+        
+        <canvas id="SceneCanvas" style="position:fixed;z-index:1; top:0;left:0;"></canvas>
+
+        <script>
+
+            var WIDTH = window.innerWidth;
+            var HEIGHT = window.innerHeight;
+
+            var VIEW_ANGLE = 45;
+            var ASPECT = WIDTH / HEIGHT;
+            var NEAR = 1;
+            var FAR = 500;
+
+            // scena
+            var scene = new THREE.Scene();
+            
+            // renderer
+            var canvas = document.getElementById("SceneCanvas");
+            var renderer = new THREE.WebGLRenderer({ canvas: canvas });
+            renderer.setClearColor(new THREE.Color(0xffffff, 1.0));
+            renderer.setSize(WIDTH, HEIGHT);
+            renderer.shadowMapEnabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // camera
+            var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+            camera.position.x = -10;
+            camera.position.y = 15;
+            camera.position.z = 6;
+            camera.lookAt(new THREE.Vector3(-6, 10, 0));
+
+            // piano
+            var planeGeo = new THREE.PlaneBufferGeometry(100.1, 100.1);
+
+            // piano
+            var planeGeometry = new THREE.PlaneGeometry(40, 40, 1, 1);
+            var planeMaterial = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("/img/wood.jpg") });
+            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.receiveShadow = true;
+            plane.rotation.x = -0.5 * Math.PI;
+            plane.position.x = 0;
+            plane.position.y = 0;
+            plane.position.z = 0;
+            scene.add(plane);
+
+            var verticalMirror = new THREE.Mirror(renderer, camera, { clipBias: 0.003, textureWidth: WIDTH, textureHeight: HEIGHT, color: 0x889999 });
+            var verticalMirrorMesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(40, 40), verticalMirror.material);
+            verticalMirrorMesh.add(verticalMirror);
+            verticalMirrorMesh.position.y = 0;
+            verticalMirrorMesh.position.z = -20;
+            scene.add(verticalMirrorMesh);
+
+            // cubo
+            var cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+
+            var cubeMaterial = [
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/lele.jpg')
+               }),
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/elena.jpg')
+               }),
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/moreno.jpg')
+               }),
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/luca.jpg')
+               }),
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/marco.jpg')
+               }),
+               new THREE.MeshLambertMaterial({
+                   map: THREE.ImageUtils.loadTexture('/img/gilberto.jpg')
+               })
+            ];
+
+            var cube = new THREE.Mesh(cubeGeometry, new THREE.MeshFaceMaterial(cubeMaterial));
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            cube.position.x = 0;
+            cube.position.y = 6;
+            cube.position.z = 0;
+            scene.add(cube);
+
+            // sfera
+            var sphereGeometry = new THREE.SphereGeometry(2, 64, 64);
+            var sphereMaterial = new THREE.MeshPhongMaterial();
+            sphereMaterial.map = THREE.ImageUtils.loadTexture('/img/earthmap1k.jpg');
+
+            sphereMaterial.bumpMap = THREE.ImageUtils.loadTexture('/img/earthbump1k.jpg');
+            sphereMaterial.bumpScale = 0.3;
+
+            sphereMaterial.specularMap = THREE.ImageUtils.loadTexture('/img/earthspec1k.jpg');
+            sphereMaterial.specular = new THREE.Color('#222');
+
+            var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.castShadow = true;
+            sphere.receiveShadow = true;
+            sphere.position.x = -8;
+            sphere.position.y = 10;
+            sphere.position.z = 0;
+            scene.add(sphere);
+            
+            // luce ambiente
+            var ambientLight = new THREE.AmbientLight('#4a4a4a');
+            ambientLight.castShadow = true;
+            scene.add(ambientLight);
+
+            // luce spot
+            var spotLight = new THREE.SpotLight('#fff');
+            spotLight.position.set(-40, 60, -10);
+            spotLight.castShadow = true;
+            spotLight.intensity = 0.75;
+            scene.add(spotLight);
+
+            function render() {
+
+                requestAnimationFrame(render);
+
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+
+                sphere.rotation.y += 0.01;
+
+                verticalMirror.render();
+
+                renderer.render(scene, camera);
+            }
+
+            render();
+
+        </script>
+
+    </body>
+</html>
