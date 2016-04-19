@@ -6,11 +6,14 @@
         <meta charset="utf-8" />
 
         <!--css-->
-        <link href="/css/style.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
 
         <!--js-->
-        <script src="/js/three.min.js"></script>
-        <script src="/js/Mirror.js"></script>
+        <script src="js/three.min.js"></script>
+        <script src="js/Mirror.js"></script>
+        <script src="js/loaders/OBJLoader.js"></script>
+        <script src="js/loaders/DDSLoader.js"></script>
+        <script src="js/loaders/MTLLoader.js"></script>
 
     </head>
     <body>
@@ -26,10 +29,22 @@
             var WIDTH = window.innerWidth;
             var HEIGHT = window.innerHeight;
 
+            var windowHalfX = window.innerWidth / 2;
+            var windowHalfY = window.innerHeight / 2;
+
             var VIEW_ANGLE = 45;
             var ASPECT = WIDTH / HEIGHT;
             var NEAR = 1;
             var FAR = 500;
+
+            var raycaster = new THREE.Raycaster();
+            var intersects;
+            var mouse = new THREE.Vector2();
+
+            var mouseX = 0, mouseY = 0;
+
+            var WoodMaterial = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("img/wood.jpg") });
+            WoodMaterial.wrapS = WoodMaterial.wrapT = THREE.RepeatWrapping;
 
             // scena
             var scene = new THREE.Scene();
@@ -40,21 +55,23 @@
             renderer.setClearColor(new THREE.Color(0xffffff, 1.0));
             renderer.setSize(WIDTH, HEIGHT);
             renderer.shadowMapEnabled = true;
+            renderer.shadowMapType = THREE.PCFSoftShadowMap;
+
             document.body.appendChild(renderer.domElement);
 
             // camera
             var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
-            camera.position.x = -10;
-            camera.position.y = 15;
-            camera.position.z = 6;
+            camera.position.x = -14;
+            camera.position.y = 10;
+            camera.position.z = 16;
             camera.lookAt(new THREE.Vector3(-6, 10, 0));
 
             // piano
             var planeGeo = new THREE.PlaneBufferGeometry(100.1, 100.1);
 
             // piano
-            var planeGeometry = new THREE.PlaneGeometry(40, 40, 1, 1);
-            var planeMaterial = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("/img/wood.jpg") });
+            var planeGeometry = new THREE.PlaneGeometry(140, 140, 1, 1);
+            var planeMaterial = WoodMaterial;
             var plane = new THREE.Mesh(planeGeometry, planeMaterial);
             plane.receiveShadow = true;
             plane.rotation.x = -0.5 * Math.PI;
@@ -63,8 +80,11 @@
             plane.position.z = 0;
             scene.add(plane);
 
-            var verticalMirror = new THREE.Mirror(renderer, camera, { clipBias: 0.003, textureWidth: WIDTH, textureHeight: HEIGHT, color: 0x889999 });
+            var verticalMirror = new THREE.Mirror(renderer, camera, { clipBias: 0.003, textureWidth: WIDTH, textureHeight: HEIGHT, color: '#1159A7' });
             var verticalMirrorMesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(40, 40), verticalMirror.material);
+            verticalMirrorMesh.name = "Specchio";
+            verticalMirror.castShadow = true;
+            verticalMirror.receiveShadow = true;
             verticalMirrorMesh.add(verticalMirror);
             verticalMirrorMesh.position.y = 0;
             verticalMirrorMesh.position.z = -20;
@@ -75,74 +95,159 @@
 
             var cubeMaterial = [
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/lele.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/lele.jpg')
                }),
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/elena.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/elena.jpg')
                }),
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/moreno.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/moreno.jpg')
                }),
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/luca.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/luca.jpg')
                }),
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/marco.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/marco.jpg')
                }),
                new THREE.MeshLambertMaterial({
-                   map: THREE.ImageUtils.loadTexture('/img/gilberto.jpg')
+                   map: THREE.ImageUtils.loadTexture('img/gilberto.jpg')
                })
             ];
 
             var cube = new THREE.Mesh(cubeGeometry, new THREE.MeshFaceMaterial(cubeMaterial));
+            cube.name = "Cubo toltech-o";
             cube.castShadow = true;
             cube.receiveShadow = true;
             cube.position.x = 0;
-            cube.position.y = 6;
+            cube.position.y = 4;
             cube.position.z = 0;
             scene.add(cube);
 
             // sfera
             var sphereGeometry = new THREE.SphereGeometry(2, 64, 64);
             var sphereMaterial = new THREE.MeshPhongMaterial();
-            sphereMaterial.map = THREE.ImageUtils.loadTexture('/img/earthmap1k.jpg');
-
-            sphereMaterial.bumpMap = THREE.ImageUtils.loadTexture('/img/earthbump1k.jpg');
-            sphereMaterial.bumpScale = 0.3;
-
-            sphereMaterial.specularMap = THREE.ImageUtils.loadTexture('/img/earthspec1k.jpg');
+            sphereMaterial.map = THREE.ImageUtils.loadTexture('img/earthmap1k.jpg');
+            sphereMaterial.bumpMap = THREE.ImageUtils.loadTexture('img/earthbump1k.jpg');
+            sphereMaterial.bumpScale = 0.5;
+            sphereMaterial.specularMap = THREE.ImageUtils.loadTexture('img/earthspec1k.jpg');
             sphereMaterial.specular = new THREE.Color('#222');
 
             var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.name = "Mondo";
             sphere.castShadow = true;
             sphere.receiveShadow = true;
             sphere.position.x = -8;
-            sphere.position.y = 10;
+            sphere.position.y = 14;
             sphere.position.z = 0;
             scene.add(sphere);
             
+            // teiera
+            var manager = new THREE.LoadingManager();
+            manager.onProgress = function (item, loaded, total) {
+                console.log(item, loaded, total);
+            };
+
+            var texture = new THREE.Texture();
+
+            var onProgress = function (xhr) {
+                if (xhr.lengthComputable) {
+                    var percentComplete = xhr.loaded / xhr.total * 100;
+                    console.log(Math.round(percentComplete, 2) + '% downloaded');
+                }
+            };
+            var onError = function (xhr) { };
+
+            THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
+
+            var teapot;
+            var mtlLoader = new THREE.MTLLoader();
+            mtlLoader.setBaseUrl('models/');
+            mtlLoader.setPath('models/');
+            mtlLoader.load('teapot.mtl', function (materials) {
+                materials.preload();
+                var objLoader = new THREE.OBJLoader();
+                objLoader.setMaterials(materials);
+                objLoader.setPath('models/');
+                objLoader.load('teapot.obj', function (object) {
+                    teapot = object;
+                    teapot.name = "Teiera";
+                    teapot.traverse(function (child) {
+                        if (child instanceof THREE.Mesh) {
+                            child.receiveShadow = true;
+                            child.castShadow = true;
+                        }
+                    });
+                    teapot.position.x = -12;
+                    teapot.position.y = 8;
+                    teapot.position.z = 0;
+                    scene.add(teapot);
+                }, onProgress, onError);
+            });
+
             // luce ambiente
             var ambientLight = new THREE.AmbientLight('#4a4a4a');
-            ambientLight.castShadow = true;
             scene.add(ambientLight);
 
             // luce spot
             var spotLight = new THREE.SpotLight('#fff');
-            spotLight.position.set(-40, 60, -10);
+            spotLight.position.set(-40, 160, -10);
+            spotLight.lookAt(new THREE.Vector3(0, 10, 0));
             spotLight.castShadow = true;
-            spotLight.intensity = 0.75;
+            spotLight.intensity = 1;
+            spotLight.shadowMapWidth = 1024; // default is 512
+            spotLight.shadowMapHeight = 1024; // default is 512
             scene.add(spotLight);
+
+            // mouse
+            function onMouseMove(event) {
+                //mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                //mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            function onDocumentMouseDown(e) {
+                e.preventDefault();
+                if (intersects.length > 0) {
+                    if (confirm("Oggetto: " + intersects[0].object.name + "\rDistanza: " + intersects[0].distance + "\rTrasformare in legno?")) {
+                        intersects[0].object.material = WoodMaterial;
+                    }
+                }
+            }
+
+            function mousewheel(e) {
+                e.preventDefault();
+                camera.position.z += e.wheelDeltaY * -0.01;
+            }
+
+            //document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('mousedown', onDocumentMouseDown, false);
+            window.addEventListener('DOMMouseScroll', mousewheel, false);
+            window.addEventListener('mousewheel', mousewheel, false);
 
             function render() {
 
                 requestAnimationFrame(render);
 
+                // intersezioni
+                raycaster.setFromCamera(mouse, camera);
+                intersects = raycaster.intersectObjects(scene.children, true);
+
+                // cubo
                 cube.rotation.x += 0.01;
                 cube.rotation.y += 0.01;
 
                 sphere.rotation.y += 0.01;
 
+                if (typeof (teapot) != 'undefined') {
+                    teapot.rotation.y += 0.03;
+                    teapot.position.x += 0.01;
+                }
+                
                 verticalMirror.render();
+
+                //camera.position.x += mouse.x * .25;
+                //camera.position.y += mouse.y * .25;
+
+                spotLight.lookAt(new THREE.Vector3(0, 0, 0));
 
                 renderer.render(scene, camera);
             }
